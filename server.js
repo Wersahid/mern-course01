@@ -62,7 +62,7 @@ if(process.env.NODE_ENV === 'development'){
                             // express.static: Middleware de Express para servir archivos estáticos (HTML, CSS, JS, imágenes, etc.).
                             // path.resolve: Resuelve rutas de archivos, manejando correctamente las diferencias entre sistemas operativos (barras / vs \).
                             // './public': Es el directorio donde se encuentran los archivos estáticos, relativo a __dirname.
-app.use(express.static(path.resolve(__dirname, './public')));
+app.use(express.static(path.resolve(__dirname, './client/dist')));
 app.use(cookieParser()); // utilizamos cookieParser para verificar las cookies
 app.use(express.json());  // especificamos que utilizaremos el formato json 
 
@@ -88,7 +88,7 @@ app.use('/api/v1/auth',authRouter)   // importamos el router de authentication
 
 // para mostrar por el lado del client un vez hecho build
 app.get('*',(req,res) => {
-    res.sendFile(path.resolve(__dirname, './public','index.html'));
+    res.sendFile(path.resolve(__dirname, './client/dist','index.html'));
 });
 
 
