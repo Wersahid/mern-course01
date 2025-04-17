@@ -3,7 +3,7 @@ import       {StatusCodes}       from  'http-status-codes';
 import          userModel        from   '../models/UserModel.js';
 import          jobModel         from   '../models/JobModel.js';
 import         cloudinary        from   'cloudinary';  // incorporamos cloudinary
-import         {promises as fs}  from   'fs';        
+import         {formatImage}     from   '../middleware/multerMiddleware.js';     
 
 export  const getCurrentUser = async (req,res) => {  // ***** obtener el usuario actual
     const user = await userModel.findOne({_id: req.user.userId}); // para obtener el object de userModel
@@ -32,10 +32,14 @@ export const updateUser = async (req,res) => {       // ***** actualizar usuario
     // incorporamos cloudinary for the aplication of images
 
     if(req.file){
+        const file = formatImage(req.file);
+        
          // Sube la imagen a Cloudinary usando la ruta temporal del archivo
-        const response = await cloudinary.v2.uploader.upload(req.file.path);
+        const response = await cloudinary.v2.uploader.upload(file);
+
          // Elimina el archivo temporal del servidor (ya que ahora está en Cloudinary)
-        await fs.unlink(req.file.path);
+        //await fs.unlink(req.file.path);
+
          // Guarda la URL segura de la imagen subida en el objeto newUser
         newUser.avatar = response.secure_url;
         // Guarda el ID público de la imagen (sirve para eliminarla después si es necesario)
