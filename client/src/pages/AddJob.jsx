@@ -9,12 +9,13 @@ import { toast } from 'react-toastify';
 import customFetch from '../utils/customFetch';
 
 //action de registro de un job
-export const action = async ({ request }) => {
+export const action = (queryClient) => async ({ request }) => {
     // request.formData() lee los datos enviados por el formulario, por el client en el body , y se los guarda en la variable formData
       const formData = await request.formData();
       const data= Object.fromEntries(formData);// convierte el object de tipo formData en un object de javascript estandar.
       try {
         await customFetch.post('/jobs',data); // implementamos el axios para completar el url
+        queryClient.invalidateQueries(['jobs']);   // react query -- invalidate queries
         toast.success('Job added successfully');  // implementamos el toastyfi para mensaje exitoso
         return redirect('/dashboard/alljobs');      // una ves creado el job , redireccionara al client a la pagina alljobs
       } catch (error) {

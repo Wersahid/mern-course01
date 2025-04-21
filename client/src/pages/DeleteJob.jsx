@@ -4,10 +4,11 @@ import  {toast}    from  'react-toastify';
 import  { redirect }  from  'react-router-dom';
 
 // con esta action hacemos delete de job
-export const action = async({params}) => {
+export const action = (queryClient) => async({params}) => {
 
     try {
      await customFetch.delete(`/jobs/${params.id}`); // hacemos la solicitud a express mediante esta api
+     queryClient.invalidateQueries(['jobs']);   // react query  --  invalidate queries
      toast.success('Job deleted successfully');
 
     } catch (error) {

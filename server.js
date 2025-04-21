@@ -6,6 +6,8 @@ import morgan         from   'morgan'; // para darle formato a la data por conso
 import mongoose       from 'mongoose';  // importamos mongoose para conectarnos a la base de datos
 import   cookieParser  from   'cookie-parser';   // cookie   
 import    cloudinary    from  'cloudinary';   // para administrar the images in la nube
+import     helmet       from  'helmet';    // security packages
+import    mongSanitize  from  'express-mongo-sanitize'; // security packages
 
 
 dotenv.config();     // establecemos dotenv
@@ -65,18 +67,9 @@ if(process.env.NODE_ENV === 'development'){
 app.use(express.static(path.resolve(__dirname, './client/dist')));
 app.use(cookieParser()); // utilizamos cookieParser para verificar las cookies
 app.use(express.json());  // especificamos que utilizaremos el formato json 
+app.use(helmet());      // security packages   
+app.use(mongSanitize()); // security packages
 
-
-// ********* PETICIONES GET,POST,PUT ************       
-app.get('/',(req,res) => {                              // GET                                                                
-    res.send('Hello Everyone ......!!!');
-
-});
-
-app.get('/api/v1/test',(req,res) => { // page for test , the union between node.js and vite
-    res.json({message: 'test union between node and vite'});
-
-});
 
 
 

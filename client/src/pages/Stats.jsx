@@ -3,27 +3,35 @@ import React from 'react';
 import { ChartsContainer, StatsContainer } from '../components';
 import customFetch from '../utils/customFetch';
 import { useLoaderData } from 'react-router-dom';
+import  { QueryClient, useQuery}      from '@tanstack/react-query';
+
+
+const statsQuery = {
+    queryKey:['stats'],
+    queryFn: async () => {
+        const response = await customFetch.get('/jobs/stats');
+        return response.data;
+    }
+    
+};
+
 
 // Función loader: se ejecuta antes de renderizar el componente para cargar datos desde la API
-export const  loader = async () => {
-   try {
-    // Realiza una solicitud GET a la ruta '/jobs/stats' usando customFetch (Axios personalizado)
-     const response = await customFetch.get('/jobs/stats');
-
-     return response.data;  // Devuelve los datos recibidos (defaultStats y monthlyApplications)
-
-   } catch (error) {
-    return error;
-   }
+export const  loader = (queryClient) => async () => {
+    const data = await queryClient.ensureQueryData(statsQuery);
+    return null;
 };
 
 const Stats = () => {
 
     // Obtiene los datos devueltos por el loader (defaultStats y monthlyApplications)
-    const { defaultStats, monthlyApplications } = useLoaderData();
+    //const { defaultStats, monthlyApplications } = useLoaderData();
+
+    const {data} = useQuery(statsQuery);
+    const { defaultStats, monthlyApplications } = data;
 
     // Renderiza los componentes de estadísticas y gráfico
-    return(
+     return(
         <>
         {/* Componente que muestra estadísticas generales (pendientes, entrevistas, rechazados) */}
         <StatsContainer defaultStats={defaultStats} />

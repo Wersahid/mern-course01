@@ -1,17 +1,27 @@
 // ** En esta clase unimos los componentes de clase (smallsidebar,bigsidebar,nav) en las rutas , (dashboard,admin,alljobs,stats,profile)
-import           React, { useContext, createContext, useState }     from 'react'; // importamos el hook use State para trabajar con estados
-import         { Outlet, redirect, useLoaderData, useNavigate }  from 'react-router-dom';// importamos Outlet para poder usar las rutas hijas 
+import           React, { useContext, createContext, useState, useEffect }     from 'react'; // importamos el hook use State para trabajar con estados
+import         { Outlet, redirect, useLoaderData, useNavigate, useNavigation }  from 'react-router-dom';// importamos Outlet para poder usar las rutas hijas 
 import           Wrapper                            from '../assets/wrappers/Dashboard';// importamos su Wrapper
-import { BigSidebar, Navbar, SmallSidebar }         from '../components'; // importamos las clases componentes
+import { BigSidebar, Navbar, SmallSidebar, Loading }         from '../components'; // importamos las clases componentes
 import           {checkDefaultTheme}                from '../App'; // importamos la funcion para cambiar el theme en las paginas
 import            customFetch                       from '../utils/customFetch';
 import              { toast }                       from 'react-toastify';
+import { useQuery } from '@tanstack/react-query';
 
+// incorporamos react query  para almacenar datos temporalmente 
+const userQuery = {
+    queryKey: ['user'],
+    queryFn: async () => {
 
-export const loader = async () => {             // incorporamos el loader permite cargar los datos necesarios para la página de manera anticipada
-    try {
         const {data} = await customFetch.get('/users/current-user') // custom fetch para determinar la base de la url
         return data;
+    }
+};
+
+
+export const loader = (queryClient) => async () => {             // incorporamos el loader permite cargar los datos necesarios para la página de manera anticipada
+    try {
+        return await queryClient.ensureQueryData(userQuery);
     } catch (error) {
         return redirect('/');
     }
@@ -22,13 +32,19 @@ export const loader = async () => {             // incorporamos el loader permit
 const DashboardContext = createContext()   // para acceder a otros datos directamente   
 
 
-const DashboardLayout = ({queryClient}) => {
-    const {user} = useLoaderData();     // incorporamos el loader, determinamos que en el login aparecera el name del usuario logueado
+const DashboardLayout = ({isDarkThemeEnabled, queryClient}) => {
+    const {user} = useQuery(userQuery).data;     
   
     const navigate = useNavigate(); // implementamos la libreria de doom useNavigate
+
+    // implementamos el circulo de loading a todas las paginas
+    const navigation = useNavigation();
+    const isPageLoading = navigation.state === 'loading';
+
     const [ showSidebar, setShowSidebar ]= useState(false); // estado para controlar la visibilidad
     const [ isDarkTheme, setIsDarkTheme ]= useState(checkDefaultTheme());  // estado para comtrolar el tema oscure
-    
+    const [isAuthError, setIsAuthError] = useState(false);
+
     const toggleDarkTheme = () => {    // para activar el cambio de icono de dia y noche
         const newDarkTheme = !isDarkTheme;
         setIsDarkTheme(newDarkTheme);
@@ -43,9 +59,23 @@ const DashboardLayout = ({queryClient}) => {
     const logoutUser = async() => {
         navigate('/'); // nos redireccionara a la pagina principal
         await customFetch.get('/auth/logout');  // al hacer click redireccionara la pagina a logout y expirara la sesion
+        queryClient.invalidateQueries();  // react query -- invalidate queries
         toast.success('Logging out....');  //  toastyfi  message
     };
-
+    
+    // axios interceptors
+    customFetch.interceptors.response.use((response) => {
+        return response;
+    }, (error) => {
+        if(error?.response?.status === 401){
+            setIsAuthError(true);
+        }
+        return Promise.reject(error);
+    });
+    useEffect(() => {
+        if(!isAuthError) return;
+        logoutUser();
+    },[isAuthError]);
 
     return(                 // dashboardContext.Provider,  envolvera todos los componentes hijos que seran los que estan contenidos                                                                                    
         <DashboardContext.Provider value={{user,showSidebar,isDarkTheme,toggleDarkTheme,toggleSidebar,logoutUser}}>        {/* uso de Context*/ }
@@ -59,7 +89,7 @@ const DashboardLayout = ({queryClient}) => {
              <div>
                 <Navbar/>
                 <div className='dashboard-page'>
-                    <Outlet context={{ user }}/>  {/* nos mostrata el nombre del usuario en todas la paginas*/}
+                    {isPageLoading? <Loading /> : <Outlet context={{ user }}/>} {/* nos mostrata el nombre del usuario en todas la paginas*/}
 
                 </div>
              </div>
